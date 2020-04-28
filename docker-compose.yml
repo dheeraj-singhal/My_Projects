@@ -1,0 +1,44 @@
+version: '3'
+services:
+  dbos:
+    image : mysql:5.7
+    volumes:
+      - mysql_storage:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_USER: dheeraj
+      MYSQL_PASSWORD: redhat
+      MYSQL_DATABASE: mydb
+
+  wordpressos:
+    image: wordpress:5.1.1-php7.3-apache
+    restart: always
+    depends_on:
+      - dbos
+    ports:
+      - 8081:80
+    environment:
+      WORDPRESS_DB_HOST: dbos
+      WORDPRESS_DB_USER: dheeraj
+      WORDPRESS_DB_PASSWORD: redhat
+      WORDPRESS_DB_NAME: mydb
+      WORDPRESS_TABLE_PREFIX: "wp_"
+      WORDPRESS_DEBUG: 1
+    volumes:
+      - wp_storage:/var/www/html
+  wordpress-cli:
+    depends_on:
+      - dbos
+      - wordpressos
+    image: wordpress:cli
+    user: xfs
+    command: >
+      /bin/sh -c '
+      sleep 10;
+      wp core install --path="var/www/html" --url="http://localhost:8081" --title="Local Wordpress By Using Docker" --admin_user=adminuser --admin_password=adminpass --admin_email=xyz@abc.com '
+    volumes: 
+      - wp_storage:/var/www/html
+volumes:
+  mysql_storage:
+  wp_storage:
